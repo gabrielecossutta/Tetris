@@ -365,140 +365,145 @@ int CheckCollisionAtSpawn(const int tetrominoStartX, const int tetrominoStartY, 
     return 0; 
 }
 
+bool Inputs(int* currentTetrominoX, int* currentTetrominoY, const int currentTetrominoType, int* currentRotation, float* timeToMoveTetrominoDown, const float moveTetrominoDownTimer)
+{
+    if (IsKeyPressed(KEY_SPACE)) // rotate the tetromino
+    {
+        const int lastRotation = (*currentRotation);
+        (*currentRotation)++;
+        if ((*currentRotation) > 3)
+        {
+            (*currentRotation) = 0;
+        }
+        if (CheckCollision((*currentTetrominoX), (*currentTetrominoY), tetrominoTypes[currentTetrominoType][(*currentRotation)]))
+        {
+            (*currentRotation) = lastRotation;
+        }
+    }
+    if (IsKeyPressed(KEY_RIGHT)) // move tetromino rigth
+    {
+        if (!CheckCollision((*currentTetrominoX) + 1, (*currentTetrominoY), tetrominoTypes[currentTetrominoType][(*currentRotation)]))
+        {
+            (*currentTetrominoX)++;
+        }
+    }
+    if (IsKeyPressed(KEY_LEFT)) // move tetromino left
+    {
+        if (!CheckCollision((*currentTetrominoX) - 1, (*currentTetrominoY), tetrominoTypes[currentTetrominoType][(*currentRotation)]))
+        {
+            (*currentTetrominoX)--;
+        }
+    }
+    if (IsKeyPressed(KEY_UP)) // drop tetromino down
+    {
+        while (!CheckCollision((*currentTetrominoX), (*currentTetrominoY) + 1, tetrominoTypes[currentTetrominoType][(*currentRotation)]))
+        {
+            (*currentTetrominoY)++;
+        }
+        for (int y = 0; y < TETROMINO_SIZE; y++)
+        {
+            for (int x = 0; x < TETROMINO_SIZE; x++)
+            {
+                const int offset = y * TETROMINO_SIZE + x;
+
+                const int *tetromino = tetrominoTypes[currentTetrominoType][(*currentRotation)];
+
+                if (tetromino[offset] == 1)
+                {
+                    const int offset_stage = (y + (*currentTetrominoY)) * STAGE_WIDTH + (x + (*currentTetrominoX));
+                    stage[offset_stage] = BACKGROUNDCOLOR;
+                }
+            }
+        }
+        return true;
+    }
+    if ((*timeToMoveTetrominoDown) <= 0 || IsKeyPressed(KEY_DOWN)) // move tetromino down
+    {
+        if (!CheckCollision((*currentTetrominoX), (*currentTetrominoY) + 1, tetrominoTypes[currentTetrominoType][(*currentRotation)]))
+        {
+            (*currentTetrominoY)++;
+            (*timeToMoveTetrominoDown) = moveTetrominoDownTimer;
+        }
+        else
+        {
+            for (int y = 0; y < TETROMINO_SIZE; y++)
+            {
+                for (int x = 0; x < TETROMINO_SIZE; x++)
+                {
+                    const int offset = y * TETROMINO_SIZE + x;
+
+                    const int *tetromino = tetrominoTypes[currentTetrominoType][(*currentRotation)];
+
+                    if (tetromino[offset] == 1)
+                    {
+                        const int offset_stage = (y + (*currentTetrominoY) * STAGE_WIDTH + (x + (*currentTetrominoX)));
+                        stage[offset_stage] = BACKGROUNDCOLOR;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 int main(int argc, char **argv, char **environ)
 {
-    Sound soundEffect; //clear sound
-    Sound gameOverEffect; //gameover sound
-    Music music; //music
-    InitAudio(&soundEffect, &music, &gameOverEffect); 
-    int lines = 0; //lines cleaned
-    bool gameOver = false; //become true when the player lose
-    float score = 0; //player score
-    const int windowWidth = 800; //window width
-    const int windowHeight = 700; //window height
+    Sound soundEffect;    // clear sound
+    Sound gameOverEffect; // gameover sound
+    Music music;          // music
+    InitAudio(&soundEffect, &music, &gameOverEffect);
+    int lines = 0;                                                                      // lines cleaned
+    bool gameOver = false;                                                              // become true when the player lose
+    float score = 0;                                                                    // player score
+    const int windowWidth = 800;                                                        // window width
+    const int windowHeight = 700;                                                       // window height
     const int startOffsetX = (windowWidth / 2) - ((STAGE_WIDTH * TILE_SIZE) / 2) - 150; // starting point for drawing the arena
     const int startOffsetY = (windowHeight / 2) - ((STAGE_HEIGHT * TILE_SIZE) / 2);
-    const int tetrominoStartX = STAGE_WIDTH / 2 - 1; //tetromino X spawning point 
-    const int tetrominoStartY = 0; //tetromino Y spawning point 
-    bool CheckCleanLine; // true if we drop a tetromino and we need to check if we have completed a line
+    const int tetrominoStartX = STAGE_WIDTH / 2 - 1; // tetromino X spawning point
+    const int tetrominoStartY = 0;                   // tetromino Y spawning point
+    bool CheckCleanLine;                             // true if we drop a tetromino and we need to check if we have completed a line
     int currentTetrominoX = tetrominoStartX;
     int currentTetrominoY = tetrominoStartY;
 
     time_t unixTime; // number of second since 00:00, Jan 1 1970
-    time(&unixTime); 
-    SetRandomSeed(unixTime); //set the seed for the number generator
+    time(&unixTime);
+    SetRandomSeed(unixTime); // set the seed for the number generator
 
-    int currentTetrominoType = GetRandomValue(0, 6); //generate aa tetromino
-    int futureTetrominoType = GetRandomValue(0, 6); // generate the future tetromino
-    int currentRotation = 0; //rotation of the tetromino
+    int currentTetrominoType = GetRandomValue(0, 6); // generate aa tetromino
+    int futureTetrominoType = GetRandomValue(0, 6);  // generate the future tetromino
+    int currentRotation = 0;                         // rotation of the tetromino
 
-    float moveTetrominoDownTimer = 1.f; //when this timer turn to 0 the tetromino move down
+    float moveTetrominoDownTimer = 1.f; // when this timer turn to 0 the tetromino move down
     float timeToMoveTetrominoDown = moveTetrominoDownTimer;
 
-    InitWindow(windowWidth, windowHeight, "TETRIS"); //used  for create the the window
+    InitWindow(windowWidth, windowHeight, "TETRIS"); // used  for create the the window
 
-    SetTargetFPS(60); //FPS target
-    PlayMusicStream(music); //start the music
-    SetMusicVolume(music, 0.25); //set the volume
+    SetTargetFPS(60);            // FPS target
+    PlayMusicStream(music);      // start the music
+    SetMusicVolume(music, 0.25); // set the volume
     while (!WindowShouldClose())
     {
-        if (!gameOver) //if the player lose he can't do anything
+        if (!gameOver) // if the player lose he can't do anything
         {
             timeToMoveTetrominoDown -= GetFrameTime(); // subtract the frame from the timer
             CheckCleanLine = false;
-            //player controls
-            if (IsKeyPressed(KEY_SPACE))  //rotate the tetromino
+            // player controls
+            CheckCleanLine = Inputs(&currentTetrominoX,&currentTetrominoY,currentTetrominoType,&currentRotation,&timeToMoveTetrominoDown,moveTetrominoDownTimer);
+            if (CheckCleanLine)
             {
-                const int lastRotation = currentRotation; 
-                currentRotation++;
-                if (currentRotation > 3)
-                {
-                    currentRotation = 0;
-                }
-                if (CheckCollision(currentTetrominoX, currentTetrominoY, tetrominoTypes[currentTetrominoType][currentRotation]))
-                {
-                    currentRotation = lastRotation;
-                }
-            }
-            if (IsKeyPressed(KEY_RIGHT)) //move tetromino rigth
-            {
-                if (!CheckCollision(currentTetrominoX + 1, currentTetrominoY, tetrominoTypes[currentTetrominoType][currentRotation]))
-                {
-                    currentTetrominoX++;
-                }
-            }
-            if (IsKeyPressed(KEY_LEFT)) //move tetromino left
-            {
-                if (!CheckCollision(currentTetrominoX - 1, currentTetrominoY, tetrominoTypes[currentTetrominoType][currentRotation]))
-                {
-                    currentTetrominoX--;
-                }
-            }
-            if (IsKeyPressed(KEY_UP)) //drop tetromino down
-            {
-                while (!CheckCollision(currentTetrominoX, currentTetrominoY + 1, tetrominoTypes[currentTetrominoType][currentRotation]))
-                {
-                    currentTetrominoY++;
-                }
-                for (int y = 0; y < TETROMINO_SIZE; y++)
-                {
-                    for (int x = 0; x < TETROMINO_SIZE; x++)
-                    {
-                        const int offset = y * TETROMINO_SIZE + x;
-
-                        const int *tetromino = tetrominoTypes[currentTetrominoType][currentRotation];
-
-                        if (tetromino[offset] == 1)
-                        {
-                            const int offset_stage = (y + currentTetrominoY) * STAGE_WIDTH + (x + currentTetrominoX);
-                            stage[offset_stage] = BACKGROUNDCOLOR;
-                        }
-                    }
-                }
-                CheckCleanLine=true;
-                
-            }
-            if (timeToMoveTetrominoDown <= 0 || IsKeyPressed(KEY_DOWN)) //move tetromino down
-            {
-                if (!CheckCollision(currentTetrominoX, currentTetrominoY + 1, tetrominoTypes[currentTetrominoType][currentRotation]))
-                {
-                    currentTetrominoY++;
-                    timeToMoveTetrominoDown = moveTetrominoDownTimer;
-                }
-                else
-                {
-                    for (int y = 0; y < TETROMINO_SIZE; y++)
-                    {
-                        for (int x = 0; x < TETROMINO_SIZE; x++)
-                        {
-                            const int offset = y * TETROMINO_SIZE + x;
-
-                            const int *tetromino = tetrominoTypes[currentTetrominoType][currentRotation];
-
-                            if (tetromino[offset] == 1)
-                            {
-                                const int offset_stage = (y + currentTetrominoY) * STAGE_WIDTH + (x + currentTetrominoX);
-                                stage[offset_stage] = BACKGROUNDCOLOR;
-                            }
-                        }
-                    }
-                    CheckCleanLine=true;
-                }
-            }
-            if(CheckCleanLine)
-            {
-                DeleteLines(soundEffect, &score, &lines, &moveTetrominoDownTimer); //check if we have completed a line
-                //we create a new tetromino
+                DeleteLines(soundEffect, &score, &lines, &moveTetrominoDownTimer); // check if we have completed a line
+                // we create a new tetromino
                 currentTetrominoX = tetrominoStartX;
                 currentTetrominoY = tetrominoStartY;
-                currentTetrominoType = futureTetrominoType; 
+                currentTetrominoType = futureTetrominoType;
                 futureTetrominoType = GetRandomValue(0, 6); // set a new future tetromino
                 currentRotation = 0;
-                CheckCleanLine=false;
+                CheckCleanLine = false;
             }
         }
         BeginDrawing();
-        if (CheckCollisionAtSpawn(tetrominoStartX, tetrominoStartY, currentTetrominoType, currentRotation))//check if we have a collision at the start, if we have a collision the player lose
+        if (CheckCollisionAtSpawn(tetrominoStartX, tetrominoStartY, currentTetrominoType, currentRotation)) // check if we have a collision at the start, if we have a collision the player lose
         {
 
             if (!gameOver) // used for play the gameover effect a single time
@@ -510,19 +515,19 @@ int main(int argc, char **argv, char **environ)
 
             DrawGameover(score);
 
-            if (IsKeyPressed(KEY_R))//if the player press r the game restart
+            if (IsKeyPressed(KEY_R)) // if the player press r the game restart
             {
                 lines = 0;
                 score = 0;
                 moveTetrominoDownTimer = 1.f;
                 timeToMoveTetrominoDown = moveTetrominoDownTimer;
 
-                for (int y = 0; y < STAGE_HEIGHT; y++) //clean the stage
+                for (int y = 0; y < STAGE_HEIGHT; y++) // clean the stage
                 {
                     for (int x = 0; x < STAGE_WIDTH; x++)
                     {
                         const int offset = y * STAGE_WIDTH + x;
-                        if (x == 0 || x == STAGE_WIDTH  - 1|| y == STAGE_HEIGHT - 1)
+                        if (x == 0 || x == STAGE_WIDTH - 1 || y == STAGE_HEIGHT - 1)
                             stage[offset] = 1;
                         else
                             stage[offset] = 0;
@@ -534,7 +539,7 @@ int main(int argc, char **argv, char **environ)
         }
         else
         {
-            //draw the game
+            // draw the game
             ClearBackground(BLACK);
             DrawBackgrond(startOffsetX, startOffsetY);
             DrawTetromino(colorTypes[currentTetrominoType], startOffsetX, startOffsetY, currentTetrominoX, currentTetrominoY, tetrominoTypes[currentTetrominoType][currentRotation]);
