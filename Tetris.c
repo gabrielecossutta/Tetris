@@ -211,7 +211,7 @@ const int *tetrominoTypes[7][4] = //array with all the tetromini and rotation
     {lTetromino0, lTetromino90, lTetromino180, lTetromino270},
 };
 
-//draw the tetromino
+// draw the tetromino
 void DrawTetromino(const Color currentColor, const int startOffsetX, const int startOffsetY, const int tetrominoStartX, const int tetrominoStartY, const int *tetromino)
 {
     for (int y = 0; y < TETROMINO_SIZE; y++)
@@ -227,7 +227,7 @@ void DrawTetromino(const Color currentColor, const int startOffsetX, const int s
         }
     }
 }
-//draw the next tetromino
+// draw the next tetromino
 void DrawNextTetromino(const Color currentColor, const int tetrominoStartX, const int tetrominoStartY, const int *tetromino)
 {
     for (int y = 0; y < TETROMINO_SIZE; y++)
@@ -244,8 +244,8 @@ void DrawNextTetromino(const Color currentColor, const int tetrominoStartX, cons
     }
 }
 
-//draw the stage
-void DrawBackgrond(const int startOffsetX,const  int startOffsetY)
+// draw the stage
+void DrawBackgrond(const int startOffsetX, const int startOffsetY)
 {
     for (int y = 0; y < STAGE_HEIGHT; y++)
     {
@@ -263,16 +263,15 @@ void DrawBackgrond(const int startOffsetX,const  int startOffsetY)
     }
 }
 
-
 void ResetLines(const int startLineY) // when we clear a line, we need to lower the other blocks
 {
     for (int y = startLineY; y >= 0; y--)
     {
         for (int x = 1; x < STAGE_WIDTH - 1; x++)
         {
-            const int offset = y * STAGE_WIDTH + x; // current block
+            const int offset = y * STAGE_WIDTH + x;             // current block
             const int offset_below = (y + 1) * STAGE_WIDTH + x; // block below the current block
-            if (stage[offset_below] == 0 && stage[offset] > 0)//if the block under the current block is empty we lower the block
+            if (stage[offset_below] == 0 && stage[offset] > 0)  // if the block under the current block is empty we lower the block
             {
                 stage[offset_below] = stage[offset];
                 stage[offset] = 0;
@@ -281,7 +280,7 @@ void ResetLines(const int startLineY) // when we clear a line, we need to lower 
     }
 }
 
-void DeleteLines(const Sound sound, float *score, int *lines, float *timer)//when we delete a line, we have to delete it
+void DeleteLines(const Sound sound, float *score, int *lines, float *timer) // when we delete a line, we have to delete it
 {
     float scoreMultiplier = 1; // used to mulpitly the score when we clear more line in one
     for (int y = 0; y < STAGE_HEIGHT - 1; y++)
@@ -290,28 +289,28 @@ void DeleteLines(const Sound sound, float *score, int *lines, float *timer)//whe
         for (int x = 1; x < STAGE_WIDTH - 1; x++)
         {
             const int offset = y * STAGE_WIDTH + x;
-            if (stage[offset] == 0) 
+            if (stage[offset] == 0)
             {
                 checkLine = 0;
                 break;
             }
         }
-        if (checkLine)//when we find a line of ones we update the score, we increase the velocity of the tetromino
+        if (checkLine) // when we find a line of ones we update the score, we increase the velocity of the tetromino
         {
             const int offset = y * STAGE_WIDTH + 1;
-            memset(stage + offset, 0, (STAGE_WIDTH - 2) * sizeof(int));//we convert all the ones in zeros
+            memset(stage + offset, 0, (STAGE_WIDTH - 2) * sizeof(int));                 // we convert all the ones in zeros
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(RED, 0.75f)); // we create a visual effect to see that we clear a line
-            PlaySound(sound); // we play the clear effect
-            ResetLines(y);//we lower the other blocks
-            *lines += 1; // we add 1 for all deleted lines
-            *timer -= 0.02; // we increase the velocity of the tetrominor 
-            scoreMultiplier += 0.1; // we increate the score multiplier
-            *score += 10 * scoreMultiplier; // we calculate the score
+            PlaySound(sound);                                                           // we play the clear effect
+            ResetLines(y);                                                              // we lower the other blocks
+            *lines += 1;                                                                // we add 1 for all deleted lines
+            *timer -= 0.02;                                                             // we increase the velocity of the tetrominor
+            scoreMultiplier += 0.1;                                                     // we increate the score multiplier
+            *score += 10 * scoreMultiplier;                                             // we calculate the score
         }
     }
 }
 
-void DrawHUD(const int score, const int lines, const float moveTetrominoDownTimer) // allows to draw the HUD 
+void DrawHUD(const int score, const int lines, const float moveTetrominoDownTimer) // allows to draw the HUD
 {
     int level = 11 - moveTetrominoDownTimer * 10; // we calculate the level, the lower is the timer the more high is the level
     DrawText(TextFormat("LEVEL: %d", level), 445, HUDPOSITION - 55, 50, WHITE);
@@ -324,7 +323,7 @@ void DrawHUD(const int score, const int lines, const float moveTetrominoDownTime
     DrawText(TextFormat(" |        |"), 500, HUDPOSITION + 310, 50, WHITE);
 }
 
-void DrawGameover(const int score)//draw the gameover and show the final score
+void DrawGameover(const int score) // draw the gameover and show the final score
 {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 1));
     DrawText("GAME OVER!", 265, 300, 50, RED);
@@ -332,25 +331,25 @@ void DrawGameover(const int score)//draw the gameover and show the final score
     DrawText("PRESS 'R' TO RESTART", 250, 400, 30, WHITE);
 }
 
-void InitAudio(Sound *soundEffect, Music *music, Sound *gameOverEffect) //initializes wav files
+void InitAudio(Sound *soundEffect, Music *music, Sound *gameOverEffect) // initializes wav files
 {
-    InitAudioDevice();//initializes audio device
+    InitAudioDevice(); // initializes audio device
     *gameOverEffect = LoadSound("sound/GameOver.wav");
     *soundEffect = LoadSound("sound/lineClear.wav");
     *music = LoadMusicStream("sound/mainMusic.wav");
 }
 
-int CheckCollisionAtSpawn(const int tetrominoStartX, const int tetrominoStartY, const int tetrominoType,const int rotation) // check for collision when we create a new tetromino, return 1 if we have collision otherwise return 0
+int CheckCollisionAtSpawn(const int tetrominoStartX, const int tetrominoStartY, const int tetrominoType, const int rotation) // check for collision when we create a new tetromino, return 1 if we have collision otherwise return 0
 {
     const int *tetromino = tetrominoTypes[tetrominoType][rotation]; // we get the pointer of the new tetromino
 
-    for (int y = 0; y < TETROMINO_SIZE; y++) //we scroll through the matrix
+    for (int y = 0; y < TETROMINO_SIZE; y++) // we scroll through the matrix
     {
         for (int x = 0; x < TETROMINO_SIZE; x++)
         {
             const int offset = y * TETROMINO_SIZE + x;
 
-            if (tetromino[offset] == 1) //when we find 1 we check if the is another 1 in the stage at the same position
+            if (tetromino[offset] == 1) // when we find 1 we check if the is another 1 in the stage at the same position
             {
                 const int offsetX = x + tetrominoStartX;
                 const int offsetY = y + tetrominoStartY;
@@ -362,10 +361,25 @@ int CheckCollisionAtSpawn(const int tetrominoStartX, const int tetrominoStartY, 
             }
         }
     }
-    return 0; 
+    return 0;
 }
 
-bool Inputs(int* currentTetrominoX, int* currentTetrominoY, const int currentTetrominoType, int* currentRotation, float* timeToMoveTetrominoDown, const float moveTetrominoDownTimer)
+void ClearStage() // clean the stage
+{
+    for (int y = 0; y < STAGE_HEIGHT; y++)
+    {
+        for (int x = 0; x < STAGE_WIDTH; x++)
+        {
+            const int offset = y * STAGE_WIDTH + x;
+            if (x == 0 || x == STAGE_WIDTH - 1 || y == STAGE_HEIGHT - 1)
+                stage[offset] = 1;
+            else
+                stage[offset] = 0;
+        }
+    }
+}
+
+bool Inputs(int *currentTetrominoX, int *currentTetrominoY, const int currentTetrominoType, int *currentRotation, float *timeToMoveTetrominoDown, const float moveTetrominoDownTimer)
 {
     if (IsKeyPressed(KEY_SPACE)) // rotate the tetromino
     {
@@ -489,7 +503,7 @@ int main(int argc, char **argv, char **environ)
             timeToMoveTetrominoDown -= GetFrameTime(); // subtract the frame from the timer
             CheckCleanLine = false;
             // player controls
-            CheckCleanLine = Inputs(&currentTetrominoX,&currentTetrominoY,currentTetrominoType,&currentRotation,&timeToMoveTetrominoDown,moveTetrominoDownTimer);
+            CheckCleanLine = Inputs(&currentTetrominoX, &currentTetrominoY, currentTetrominoType, &currentRotation, &timeToMoveTetrominoDown, moveTetrominoDownTimer);
             if (CheckCleanLine)
             {
                 DeleteLines(soundEffect, &score, &lines, &moveTetrominoDownTimer); // check if we have completed a line
@@ -521,19 +535,8 @@ int main(int argc, char **argv, char **environ)
                 score = 0;
                 moveTetrominoDownTimer = 1.f;
                 timeToMoveTetrominoDown = moveTetrominoDownTimer;
-
-                for (int y = 0; y < STAGE_HEIGHT; y++) // clean the stage
-                {
-                    for (int x = 0; x < STAGE_WIDTH; x++)
-                    {
-                        const int offset = y * STAGE_WIDTH + x;
-                        if (x == 0 || x == STAGE_WIDTH - 1 || y == STAGE_HEIGHT - 1)
-                            stage[offset] = 1;
-                        else
-                            stage[offset] = 0;
-                    }
-                }
                 gameOver = false;
+                ClearStage(); // clean the stages
                 PlayMusicStream(music);
             }
         }
