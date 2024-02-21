@@ -1,4 +1,3 @@
-#include "raylib.h"
 #include <time.h>
 #include <string.h>
 #include "Tetris.h"
@@ -332,14 +331,6 @@ void DrawGameover(const int score)//draw the gameover and show the final score
     DrawText("PRESS 'R' TO RESTART", 250, 400, 30, WHITE);
 }
 
-void InitAudio(Sound *soundEffect, Music *music, Sound *gameOverEffect) //initializes wav files
-{
-    InitAudioDevice();//initializes audio device
-    *gameOverEffect = LoadSound("sound/GameOver.wav");
-    *soundEffect = LoadSound("sound/lineClear.wav");
-    *music = LoadMusicStream("sound/mainMusic.wav");
-}
-
 int CheckCollisionAtSpawn(const int tetrominoStartX, const int tetrominoStartY, const int tetrominoType,const int rotation) // check for collision when we create a new tetromino, return 1 if we have collision otherwise return 0
 {
     const int *tetromino = tetrominoTypes[tetrominoType][rotation]; // we get the pointer of the new tetromino
@@ -363,6 +354,21 @@ int CheckCollisionAtSpawn(const int tetrominoStartX, const int tetrominoStartY, 
         }
     }
     return 0; 
+}
+
+void ClearStage() // clean the stage
+{
+    for (int y = 0; y < STAGE_HEIGHT; y++)
+    {
+        for (int x = 0; x < STAGE_WIDTH; x++)
+        {
+            const int offset = y * STAGE_WIDTH + x;
+            if (x == 0 || x == STAGE_WIDTH - 1 || y == STAGE_HEIGHT - 1)
+                stage[offset] = 1;
+            else
+                stage[offset] = 0;
+        }
+    }
 }
 
 int main(int argc, char **argv, char **environ)
@@ -517,18 +523,8 @@ int main(int argc, char **argv, char **environ)
                 moveTetrominoDownTimer = 1.f;
                 timeToMoveTetrominoDown = moveTetrominoDownTimer;
 
-                for (int y = 0; y < STAGE_HEIGHT; y++) //clean the stage
-                {
-                    for (int x = 0; x < STAGE_WIDTH; x++)
-                    {
-                        const int offset = y * STAGE_WIDTH + x;
-                        if (x == 0 || x == STAGE_WIDTH  - 1|| y == STAGE_HEIGHT - 1)
-                            stage[offset] = 1;
-                        else
-                            stage[offset] = 0;
-                    }
-                }
                 gameOver = false;
+                ClearStage();
                 PlayMusicStream(music);
             }
         }
